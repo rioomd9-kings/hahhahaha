@@ -13,7 +13,7 @@ const path = require('path');
 // Format: 7123456789:AAHxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 const TOKEN = process.env.BOT_TOKEN || '8901654512:AAHiYu0ijRGTsZouWHbgicFrFZf48FC8tn4';
 const OWNER = process.env.OWNER_USERNAME || '@rio_mddd';
-const PANEL_URL = process.env.PANEL_URL || 'https://panel.example.com';
+const PANEL_URL = process.env.PANEL_URL || 'https://rioomd-bot.USERNAME.repl.co';
 
 // Validasi token
 if (!TOKEN || TOKEN === 'PASTE_TOKEN_KAMU_DI_SINI') {
